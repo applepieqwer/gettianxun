@@ -128,7 +128,6 @@ if __name__ == '__main__':
 						f.write(ajax_str.encode('utf8'))
 						f.close()
 						loop = False
-						continue
 		except urllib2.HTTPError as e:
 			print 'HTTPError Maybe Captcha'
 			print e.geturl()
