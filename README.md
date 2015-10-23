@@ -1,0 +1,2 @@
+# gettianxun
+get tianxun info
