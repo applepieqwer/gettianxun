@@ -2,13 +2,13 @@
 # http://curl.haxx.se/rfc/cookie_spec.html
 # This is a generated file!  Do not edit.
 
-.tianxun.com	TRUE	/	FALSE	1445616727	SSSessionID	051u083562a444587e1865343601571174o3
+.tianxun.com	TRUE	/	FALSE	1445620143	SSSessionID	051u083562a444587e1865343601571174o3
 .tianxun.com	TRUE	/	FALSE	1445970565	geoCountryCode	CN
 .www.tianxun.com	TRUE	/	FALSE		fCabin	Economy
 .www.tianxun.com	TRUE	/	FALSE		fDepCityCode	CSHA
-.www.tianxun.com	TRUE	/	FALSE		fDepDate	2015-11-02
+.www.tianxun.com	TRUE	/	FALSE		fDepDate	2015-11-05
 .www.tianxun.com	TRUE	/	FALSE		fDirect	1
-.www.tianxun.com	TRUE	/	FALSE		fDstCityCode	MFMA
+.www.tianxun.com	TRUE	/	FALSE		fDstCityCode	NYCA
 .www.tianxun.com	TRUE	/	FALSE		fRoundType	1
-.www.tianxun.com	TRUE	/	FALSE		fRtnDate	2015-11-08
-www.tianxun.com	FALSE	/	FALSE		SERVERID	a11624f3cca54e05051d50df5d92486d|1445613127|1445613127
+.www.tianxun.com	TRUE	/	FALSE		fRtnDate	2015-11-11
+www.tianxun.com	FALSE	/	FALSE		SERVERID	a11624f3cca54e05051d50df5d92486d|1445616543|1445616543

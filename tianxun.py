@@ -6,6 +6,8 @@ import json
 import time
 from codecs import BOM_UTF8
 import logging
+import argparse
+import datetime
 
 #新加坡
 #1 http://www.tianxun.com/intl-oneway-csha-sins.html?depdate=2015-11-02&cabin=Economy&adult=1&child=0&infant=0&direct=1
@@ -52,6 +54,10 @@ def download_ajax_loop(ajax):
 	while status != 'UpdatesComplete' and count < 100:
 		count = count + 1
 		ajax_page = download_ajax(ajax)
+		if len(ajax_page) < 10:
+			print 'empty ajax result. sleeping 5 secs.'
+			time.sleep(5)
+			continue
 		logger = logging.getLogger('root')  
 		logger.warning(ajax_page)
 		try:
@@ -62,7 +68,11 @@ def download_ajax_loop(ajax):
 			return False
 		status = ajax_v['status']
 		print '%d: Status = %s'%(count,status)
-		time.sleep(5)
+		if status == 'UpdatesComplete':
+			continue
+		else:
+			print 'sleeping 5 secs'
+			time.sleep(5)
 	return ajax_v
 
 def ajax_v_2_text(ajax_v):
@@ -76,8 +86,19 @@ def ajax_v_2_text(ajax_v):
 	return f
 
 if __name__ == '__main__':
+	parser = argparse.ArgumentParser(description='Download info from tianxun.com')
+	parser.add_argument('org',help='出发城市',type=str)
+	parser.add_argument('dst',help='到达城市',type=str)
+	parser.add_argument('org_date',help='出发日期（yyyy-mm-dd）',type=str)
+	parser.add_argument('--output',help='保存结果信息',type=str,default='%s-%s-%s-%s-result.csv')
+	parser.add_argument('--debug_file',help='保存调试信息',type=str,default='%s-debug.txt')
+	args = parser.parse_args()
+	
+	str_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+	result_filename = args.output%(str_now,args.org,args.dst,args.org_date)
+	
 	logger = logging.getLogger('root')  
-	file_handler = logging.FileHandler('test.log') 
+	file_handler = logging.FileHandler(args.debug_file%str_now) 
 	formatter = logging.Formatter('%(name)-12s %(asctime)s %(levelname)-8s %(message)s', '%a, %d %b %Y %H:%M:%S',) 
 	file_handler.setFormatter(formatter)  
 	logger.addHandler(file_handler)  
@@ -94,17 +115,24 @@ if __name__ == '__main__':
 	loop = True
 	while loop:
 		try:
-			html_page = download_intl_page('csha', 'mfma', '2015-11-02')
+			html_page = download_intl_page(args.org, args.dst, args.org_date)
 			params = find_params(html_page)
 			if params != False:
 				ajax = mk_params_2_ajax(params)
 				ajax_v = download_ajax_loop(ajax)
 				if ajax_v != False:
-					print ajax_v_2_text(ajax_v)
-					loop = False
+					ajax_str = ajax_v_2_text(ajax_v)
+					if ajax_str != False:
+						ajax_str = ajax_str + '\ndownload datetime:%s'%str_now
+						f = open(result_filename,'w')
+						f.write(ajax_str.encode('utf8'))
+						f.close()
+						loop = False
+						continue
 		except urllib2.HTTPError as e:
 			print 'HTTPError Maybe Captcha'
 			print e.geturl()
 			exit()
+		print 'sleeping 10 secs'
 		time.sleep(10)
 	cookies.save(ignore_discard=True,ignore_expires=True)
