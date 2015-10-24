@@ -51,7 +51,7 @@ def download_ajax(ajax):
 def download_ajax_loop(ajax):
 	status = 'UpdatesPending'
 	count = 0
-	while status != 'UpdatesComplete' and count < 100:
+	while status != 'UpdatesComplete' and count < 30:
 		count = count + 1
 		ajax_page = download_ajax(ajax)
 		if len(ajax_page) < 10:
@@ -71,31 +71,66 @@ def download_ajax_loop(ajax):
 		if status == 'UpdatesComplete':
 			continue
 		else:
-			print 'sleeping 5 secs'
-			time.sleep(5)
+			print 'sleeping %d secs'%(5+count)
+			time.sleep(5+count)
 	return ajax_v
 
 def ajax_v_2_text(ajax_v):
-	f = u'航空公司,航班号,起飞机场,起飞时间,落地机场,落地日期,落地时间,飞行时间,跨天,经停,票价,税,票务'
+	f = u'航空公司,航班号,代码共享,起飞机场,起飞时间,落地机场,落地日期,落地时间,飞行时间,跨天,经停,票价,税,票务'
 	for flight in ajax_v['flights']:
 		flightinfo = flight['flightInfoList'][0]
 		priceinfo = flight['flightPriceList'][0]
 		info = flightinfo.copy()
 		info.update(priceinfo)
-		f = f + '\n%(flightAirlineIdsOper)s,%(flightNumber)s,%(depAirportId)s,%(depDatetime)s,%(dstAirportId)s,%(arrivalDate)s,%(arrivalDatetime)s,%(duration)s,%(nextDay)s,%(stopNum)s,%(price)s,%(tax)s,%(supplierName)s'%info
+		f = f + '\n%(flightAirlineIds)s,%(flightNumber)s,%(flightAirlineIdsOper)s,%(depAirportId)s,%(depDatetime)s,%(dstAirportId)s,%(arrivalDate)s,%(arrivalDatetime)s,%(duration)s,%(nextDay)s,%(stopNum)s,%(price)s,%(tax)s,%(supplierName)s'%info
 	return f
+
+def fire_captcha(code):
+	f = open('captcha_token.txt','r')
+	token = f.read()
+	f.close()
+	#http://www.tianxun.com/service/captcha.php?captcha=ecagod
+	f = urllib2.urlopen('http://www.tianxun.com/service/captcha.php?captcha=%s'%code)
+	#print f.read()
+	#http://www.tianxun.com/captchapage.php?xc=12297&redirect=http%3A%2F%2Fwww.tianxun.com
+	try:
+		print '_token_=%s&captcha=%s'%(token,code)
+		f = urllib2.urlopen('http://www.tianxun.com/captchapage.php?xc=12297&redirect=http%3A%2F%2Fwww.tianxun.com%2Fintl-oneway-csha-rome.html%3Fdepdate%3D2015-11-23%26cabin%3DEconomy%26adult%3D1%26child%3D0%26infant%3D0%26direct%3D1',data='_token_=%s&captcha=%s'%(token,code))
+		#print f.read()
+	except urllib2.HTTPError as e:
+		print 'urllib2.HTTPError'
+	return True
+	
+def download_captcha():
+	#http://www.tianxun.com/service/captcha.php?bg=244&r=0
+	c = urllib2.urlopen('http://www.tianxun.com/service/captcha.php?bg=244&r=0')
+	e = open('captcha.jpg','wb')
+	e.write(c.read())
+	e.close()
+
+def find_captcha_token(html):
+	logger = logging.getLogger('root')  
+	logger.warning(html)
+	i = html.find('<input type="hidden" name="_token_" value="')
+	if i == -1:
+		return False
+	i = i + 43
+	token = html[i:i+128]
+	return token
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Download info from tianxun.com')
 	parser.add_argument('org',help='出发城市',type=str)
 	parser.add_argument('dst',help='到达城市',type=str)
-	parser.add_argument('org_date',help='出发日期（yyyy-mm-dd）',type=str)
+	parser.add_argument('--delta_day',help='出发日期为之后多少天',type=int,default=30)
 	parser.add_argument('--output',help='保存结果信息',type=str,default='%s-%s-%s-%s-result.csv')
 	parser.add_argument('--debug_file',help='保存调试信息',type=str,default='%s-debug.txt')
+	parser.add_argument('--captcha',help='验证码',type=str,default='null')
 	args = parser.parse_args()
 	
+	org_date = datetime.date.today()  + datetime.timedelta(days=args.delta_day)
 	str_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-	result_filename = args.output%(str_now,args.org,args.dst,args.org_date)
+	result_filename = args.output%(str_now,args.org,args.dst,org_date.strftime('%Y-%m-%d'))
 	
 	logger = logging.getLogger('root')  
 	file_handler = logging.FileHandler(args.debug_file%str_now) 
@@ -112,10 +147,13 @@ if __name__ == '__main__':
 	opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookies))
 	urllib2.install_opener(opener)
 	
+	if args.captcha!='null':
+		fire_captcha(args.captcha)
+	
 	loop = True
 	while loop:
 		try:
-			html_page = download_intl_page(args.org, args.dst, args.org_date)
+			html_page = download_intl_page(args.org, args.dst, org_date.strftime('%Y-%m-%d'))
 			params = find_params(html_page)
 			if params != False:
 				ajax = mk_params_2_ajax(params)
@@ -123,14 +161,23 @@ if __name__ == '__main__':
 				if ajax_v != False:
 					ajax_str = ajax_v_2_text(ajax_v)
 					if ajax_str != False:
-						ajax_str = ajax_str + '\ndownload datetime:%s'%str_now
+						ajax_str = ajax_str + '\ndep date:%s'%org_date.strftime('%Y-%m-%d') + '\ndownload datetime:%s'%str_now
 						f = open(result_filename,'w')
 						f.write(ajax_str.encode('utf8'))
 						f.close()
+						print 'saved to %s'%result_filename
 						loop = False
 		except urllib2.HTTPError as e:
 			print 'HTTPError Maybe Captcha'
 			print e.geturl()
+			token = find_captcha_token(e.read())
+			print 'token:%s'%token
+			f = open('captcha_token.txt','w')
+			f.write(token)
+			f.close()
+			download_captcha()
+			print 'view captch.jpg and use --captcha next time'
+			cookies.save(ignore_discard=True,ignore_expires=True)
 			exit()
 		print 'sleeping 10 secs'
 		time.sleep(10)
