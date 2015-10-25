@@ -71,8 +71,8 @@ def download_ajax_loop(ajax):
 		if status == 'UpdatesComplete':
 			continue
 		else:
-			print 'sleeping %d secs'%(5+count)
-			time.sleep(5+count)
+			print 'sleeping %d secs'%(5+count*3)
+			time.sleep(5+count*3)
 	return ajax_v
 
 def ajax_v_2_text(ajax_v):
@@ -122,15 +122,14 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='Download info from tianxun.com')
 	parser.add_argument('org',help='出发城市',type=str)
 	parser.add_argument('dst',help='到达城市',type=str)
-	parser.add_argument('--delta_day',help='出发日期为之后多少天',type=int,default=30)
+	parser.add_argument('org_date',help='出发日期',type=str)
 	parser.add_argument('--output',help='保存结果信息',type=str,default='%s-%s-%s-%s-result.csv')
 	parser.add_argument('--debug_file',help='保存调试信息',type=str,default='%s-debug.txt')
 	parser.add_argument('--captcha',help='验证码',type=str,default='null')
 	args = parser.parse_args()
 	
-	org_date = datetime.date.today()  + datetime.timedelta(days=args.delta_day)
 	str_now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-	result_filename = args.output%(str_now,args.org,args.dst,org_date.strftime('%Y-%m-%d'))
+	result_filename = args.output%(args.org,args.dst,args.org_date,str_now)
 	
 	logger = logging.getLogger('root')  
 	file_handler = logging.FileHandler(args.debug_file%str_now) 
@@ -153,7 +152,7 @@ if __name__ == '__main__':
 	loop = True
 	while loop:
 		try:
-			html_page = download_intl_page(args.org, args.dst, org_date.strftime('%Y-%m-%d'))
+			html_page = download_intl_page(args.org, args.dst, args.org_date)
 			params = find_params(html_page)
 			if params != False:
 				ajax = mk_params_2_ajax(params)
@@ -161,7 +160,7 @@ if __name__ == '__main__':
 				if ajax_v != False:
 					ajax_str = ajax_v_2_text(ajax_v)
 					if ajax_str != False:
-						ajax_str = ajax_str + '\ndep date:%s'%org_date.strftime('%Y-%m-%d') + '\ndownload datetime:%s'%str_now
+						ajax_str = ajax_str + '\ndep date:%s'%args.org_date + '\ndownload datetime:%s'%str_now
 						f = open(result_filename,'w')
 						f.write(ajax_str.encode('utf8'))
 						f.close()
