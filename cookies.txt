@@ -1,15 +1,13 @@
 # Netscape HTTP Cookie File
-# http://curl.haxx.se/rfc/cookie_spec.html
+# http://www.netscape.com/newsref/std/cookie_spec.html
 # This is a generated file!  Do not edit.
 
-.tianxun.com	TRUE	/	FALSE	1445660085	SSSessionID	051u082562af55a5bfd5836750490145116t
 .tianxun.com	TRUE	/	FALSE	1445970565	geoCountryCode	CN
-.tianxun.com	TRUE	/	FALSE	1445657085	tx_access_key	V1QBAFYLXAJJAVIAVAhQBwIHAAQOV1UHVgdTVlUIUQkEUABWVlcCAlo%3D
 .www.tianxun.com	TRUE	/	FALSE		fCabin	Economy
 .www.tianxun.com	TRUE	/	FALSE		fDepCityCode	CSHA
 .www.tianxun.com	TRUE	/	FALSE		fDepDate	2015-11-23
 .www.tianxun.com	TRUE	/	FALSE		fDirect	1
-.www.tianxun.com	TRUE	/	FALSE		fDstCityCode	ROME
+.www.tianxun.com	TRUE	/	FALSE		fDstCityCode	NYCA
 .www.tianxun.com	TRUE	/	FALSE		fRoundType	1
 .www.tianxun.com	TRUE	/	FALSE		fRtnDate	2015-11-29
-www.tianxun.com	FALSE	/	FALSE		SERVERID	a11624f3cca54e05051d50df5d92486d|1445656499|1445656485
+www.tianxun.com	FALSE	/	FALSE		SERVERID	a11624f3cca54e05051d50df5d92486d|1445699906|1445699855
